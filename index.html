@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Семейный бюджет</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f5f7;--cd:#fff;--tx:#1b1f24;--mu:#6b7380;--bd:#e2e5ea;--ac:#2563eb;--in:#15803d;--ex:#c2410c;--sv:#7c3aed}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171b;--cd:#1d2127;--tx:#e8eaed;--mu:#9aa3af;--bd:#2c323a;--ac:#6b9bff;--in:#4ade80;--ex:#fb923c;--sv:#a78bfa}}
+:root[data-theme="dark"]{--bg:#14171b;--cd:#1d2127;--tx:#e8eaed;--mu:#9aa3af;--bd:#2c323a;--ac:#6b9bff;--in:#4ade80;--ex:#fb923c;--sv:#a78bfa}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.w{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0}h2{font-size:15px;margin:0 0 10px}
+.cd{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-top:12px}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.g{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:560px){.g4{grid-template-columns:repeat(4,1fr)}}
+.st{font-size:12px;color:var(--mu)}.sv{font-size:18px;font-weight:600;margin-top:2px}
+input,select,button{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;min-width:0}
+button{cursor:pointer}button.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+.r{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.r>*{flex:1 1 120px}
+.tg button{flex:1}.tg button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.li{display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--bd)}
+.li .m{flex:1;min-width:0}.li .m small{display:block;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.x{padding:2px 8px;border:0;background:none;color:var(--mu)}
+.bar{height:8px;border-radius:4px;background:var(--bd);margin-top:4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--sv)}
+.in{color:var(--in)}.ex{color:var(--ex)}.sa{color:var(--sv)}
+.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mu)}.f input{font-size:15px}
+</style></head><body><div class="w">
+<div class="hd"><h1>💰 Семейный бюджет</h1><input type="month" id="mon" style="flex:0 0 auto"></div>
+<div class="r tg" style="margin-bottom:0"><button data-p="cur" class="on">Текущий месяц</button><button data-p="arc">Архив</button></div>
+<p id="msg" class="st" role="alert"></p>
+<p id="loc" class="st" hidden>Данные хранятся только в этом браузере и не синхронизируются между устройствами.</p>
+
+<div id="cur">
+<div class="g g4" style="margin-top:12px">
+<div class="cd" style="margin:0"><div class="st">Поступления (зарплата и взносы)</div><div class="sv in" id="si"></div></div>
+<div class="cd" style="margin:0"><div class="st">Траты</div><div class="sv ex" id="se"></div></div>
+<div class="cd" style="margin:0"><div class="st">Отложено за месяц</div><div class="sv sa" id="ss"></div></div>
+<div class="cd" style="margin:0"><div class="st">Остаток месяца</div><div class="sv" id="sb"></div></div></div>
+
+<div class="cd"><h2>Моя зарплата за месяц</h2>
+<div class="r"><label class="f">Ставка за смену, ₽<input id="rate" type="number" min="0" inputmode="decimal"></label><label class="f">Смен отработано<input id="shifts" type="number" min="0" inputmode="decimal"></label></div>
+<div class="r"><label class="f">Учтённый KPI, ₽<input id="kpi" type="number" min="0" inputmode="decimal"></label><label class="f">Аванс получен, ₽<input id="adv" type="number" min="0" inputmode="decimal"></label><label class="f">Зарплата получена, ₽<input id="sal" type="number" min="0" inputmode="decimal"></label></div>
+<div class="g g4" style="margin-top:10px">
+<div><div class="st">Оклад (ставка × смены)</div><div class="sv" id="pb"></div></div>
+<div><div class="st">Начислено (оклад + KPI)</div><div class="sv" id="pk"></div></div>
+<div><div class="st">Получено (аванс + зарплата)</div><div class="sv" id="pg"></div></div>
+<div><div class="st">Осталось получить</div><div class="sv" id="pl"></div></div></div><div class="r"><button class="p" id="p_ar">Выгрузить месяц в архив</button></div></div>
+
+<div class="cd"><h2>Новая операция</h2>
+<div class="r tg"><button data-t="expense" class="on">Трата</button><button data-t="deposit">Взнос</button><button data-t="save">Отложить</button></div>
+<div class="r"><input type="date" id="dt"><select id="ct"></select><input id="am" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Сумма, ₽"></div>
+<div class="r"><input id="nt" placeholder="Заметка (необязательно)" style="flex:3 1 200px"><button class="p" id="add">Добавить</button></div></div>
+
+<div class="cd"><div class="hd"><h2>Накопления и цели</h2><div class="st">Всего отложено: <b class="sa" id="st"></b></div></div>
+<div id="gl"></div>
+<div class="r"><input id="gn" placeholder="Новая цель (например, Отпуск)" style="flex:3 1 180px"><input id="gt" type="number" min="0" inputmode="decimal" placeholder="Сумма цели, ₽"><button id="ga">+ Цель</button></div></div>
+
+<div class="cd"><h2>Траты по категориям</h2><div id="cb"></div></div>
+<div class="cd"><h2>Операции за месяц</h2><div id="ls"></div></div>
+</div>
+
+<div id="arc" hidden><div class="cd"><h2>Внести прошедший месяц</h2><div class="r"><label class="f">Месяц<input type="month" id="a_m"></label><label class="f">Аванс, ₽<input id="a_adv" type="number" min="0" inputmode="decimal"></label><label class="f">Зарплата, ₽<input id="a_sal" type="number" min="0" inputmode="decimal"></label><label class="f">KPI, ₽<input id="a_kpi" type="number" min="0" inputmode="decimal"></label></div><div class="r"><label class="f">Траты за месяц (итого), ₽<input id="a_ex" type="number" min="0" inputmode="decimal"></label><label class="f">Отложено за месяц, ₽<input id="a_sv" type="number" min="0" inputmode="decimal"></label><button class="p" id="a_ok" style="align-self:flex-end">Сохранить в архив</button></div></div><div id="al"></div>
+<div class="cd" id="bk" hidden><h2>Перенос данных</h2><div class="r"><button id="ex1">Экспорт в файл</button><button id="im1">Импорт (заменит данные)</button><input type="file" id="imf" accept=".json" hidden></div></div></div>
+</div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n||0)+' ₽';
+const today=()=>new Date().toLocaleDateString('sv-SE'),cm=()=>today().slice(0,7);
+const CAT=['Еда','Жильё','Транспорт','Связь','Здоровье','Отдых','Другое'],PF=['rate','shifts','kpi','adv','sal'],DEP=['Взнос','Подработка','Подарок','Прочее'];
+let db,U,uid,type='expense',TX=[],GL=[],PAY=[],names={},curM=cm(),viewM=cm(),timer;
+const setDt=()=>$('#dt').value=viewM===curM?today():viewM+'-01';setDt();$('#mon').value=viewM;
+const err=e=>{$('#msg').textContent='Ошибка: '+(e&&(e.message||e.code)||e)};
+const w=p=>Promise.resolve(p).catch(err);
+const sum=(a,ty,f)=>a.filter(t=>t.type===ty&&(!f||f(t))).reduce((x,t)=>x+(+t.amount||0),0);
+const mlabel=m=>new Date(m+'-01').toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+
+/* Хранилище: общая база claude.ai (если доступна) или localStorage в браузере (GitHub Pages) */
+function mkLocal(){const K='fin_local_v2';let D;try{D=JSON.parse(localStorage.getItem(K))||{}}catch(e){D={}}
+ const L={},sv=()=>{try{localStorage.setItem(K,JSON.stringify(D))}catch(e){}},fire=n=>(L[n]||[]).forEach(f=>f());
+ const snap=n=>({docs:Object.entries(D[n]||{}).map(([id,v])=>({id,data:()=>v}))});
+ return{local:1,collection:n=>({onSnapshot(f){(L[n]=L[n]||[]).push(()=>f(snap(n)));f(snap(n))},
+  async add(v){(D[n]=D[n]||{})[Date.now().toString(36)+Math.random().toString(36).slice(2,6)]=v;sv();fire(n)},
+  doc:id=>({async set(v){(D[n]=D[n]||{})[id]=v;sv();fire(n)},async delete(){delete(D[n]||{})[id];sv();fire(n)}})}),
+  dump:()=>JSON.stringify(D),load:j=>{D=JSON.parse(j);sv();Object.keys(L).forEach(fire)}}}
+
+function fillCat(){$('#ct').innerHTML=type==='save'?'<option value="">Без цели</option>'+GL.map(g=>`<option value="${esc(g.id)}">${esc(g.name)}</option>`).join(''):(type==='deposit'?DEP:CAT).map(c=>`<option>${esc(c)}</option>`).join('')}
+const myDoc=()=>PAY.find(p=>p.id===viewM+'_'+uid)||{};
+function fillPay(){const p=myDoc(),prev=PAY.filter(x=>x.uid===uid&&x.m<viewM&&x.rate).sort((a,b)=>b.m.localeCompare(a.m))[0];
+ PF.forEach(k=>{if(document.activeElement.id!==k)$('#'+k).value=p[k]??(k==='rate'&&prev?prev.rate:'')});calc()}
+function calc(){const v=k=>+$('#'+k).value||0,base=v('rate')*v('shifts');
+ $('#pb').textContent=fmt(base);$('#pk').textContent=fmt(base+v('kpi'));$('#pg').textContent=fmt(v('adv')+v('sal'));$('#pl').textContent=fmt(base+v('kpi')-v('adv')-v('sal'))}
+function savePay(){clearTimeout(timer);calc();timer=setTimeout(()=>{const o={m:viewM,uid};PF.forEach(k=>o[k]=+$('#'+k).value||0);w(db.collection('pay').doc(viewM+'_'+uid).set(o))},600)}
+
+function render(){const m=viewM,mt=TX.filter(t=>(t.date||'').startsWith(m)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ const got=PAY.filter(p=>p.m===m).reduce((x,p)=>x+(+p.adv||0)+(+p.sal||0),0)+sum(mt,'deposit'),ex=sum(mt,'expense'),sv=sum(mt,'save'),bal=got-ex-sv;
+ $('#si').textContent=fmt(got);$('#se').textContent=fmt(ex);$('#ss').textContent=fmt(sv);
+ $('#sb').textContent=fmt(bal);$('#sb').className='sv '+(bal<0?'ex':'in');$('#st').textContent=fmt(sum(TX,'save'));
+ const free=sum(TX,'save',t=>!GL.some(g=>g.id===t.goal));
+ $('#gl').innerHTML=GL.map(g=>{const s=sum(TX,'save',t=>t.goal===g.id),p=g.target>0?Math.min(100,s/g.target*100):0;
+  return `<div style="margin-bottom:12px"><div class="hd"><b>${esc(g.name)}</b><span><span class="st">${fmt(s)} из ${fmt(g.target)} · ${Math.round(p)}%</span><button class="x" data-g="${esc(g.id)}" title="Удалить цель">✕</button></span></div><div class="bar"><i style="width:${p}%"></i></div></div>`}).join('')
+  +(free?`<div class="st" style="margin-bottom:8px">Без цели: ${fmt(free)}</div>`:'')||'<p class="st">Целей пока нет — добавьте первую ниже.</p>';
+ const cats={};mt.filter(t=>t.type==='expense').forEach(t=>cats[t.cat]=(cats[t.cat]||0)+(+t.amount||0));
+ $('#cb').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div style="margin-bottom:8px"><div class="hd"><span>${esc(c)}</span><span class="st">${fmt(v)}</span></div><div class="bar"><i style="width:${ex?v/ex*100:0}%;background:var(--ex)"></i></div></div>`).join('')||'<p class="st">Трат нет.</p>';
+ $('#ls').innerHTML=mt.map(t=>{const g=GL.find(x=>x.id===t.goal),sa=t.type==='save',dp=t.type==='deposit';
+  return `<div class="li"><div class="m"><b>${esc(sa?'Отложено → '+(g?g.name:'без цели'):t.cat)}</b><small>${esc(t.date)} · ${esc(names[t.by]||'')}${t.note?' · '+esc(t.note):''}</small></div><b class="${sa?'sa':dp?'in':'ex'}">${sa?'→':dp?'+':'−'}${fmt(t.amount)}</b><button class="x" data-d="${esc(t.id)}" title="Удалить">✕</button></div>`}).join('')||'<p class="st">Операций нет.</p>';
+ calc();renderArc()}
+
+function renderArc(){const ms=[...new Set([...TX.map(t=>(t.date||'').slice(0,7)),...PAY.map(p=>p.m)].filter(Boolean))].sort().reverse();
+ $('#al').innerHTML=ms.map(m=>{const tx=TX.filter(t=>(t.date||'').startsWith(m)),pp=PAY.filter(p=>p.m===m),ex=sum(tx,'expense'),sv=sum(tx,'save');
+  const got=pp.reduce((x,p)=>x+(+p.adv||0)+(+p.sal||0),0)+sum(tx,'deposit'),cats={};tx.filter(t=>t.type==='expense').forEach(t=>cats[t.cat]=(cats[t.cat]||0)+(+t.amount||0));
+  return `<div class="cd"><div class="hd"><h2 style="margin:0">${esc(mlabel(m))}</h2><span class="st">${m===curM?'идёт сейчас':'закрыт'}</span></div>
+  <div class="g g4" style="margin-top:8px"><div><div class="st">Получено</div><b class="in">${fmt(got)}</b></div><div><div class="st">Траты</div><b class="ex">${fmt(ex)}</b></div><div><div class="st">Отложено</div><b class="sa">${fmt(sv)}</b></div><div><div class="st">Остаток</div><b>${fmt(got-ex-sv)}</b></div></div>
+  ${pp.map(p=>`<div class="st" style="margin-top:6px">${esc(names[p.uid]||'Участник')}: аванс ${fmt(p.adv)}, зарплата ${fmt(p.sal)}, KPI ${fmt(p.kpi)}, ставка ${fmt(p.rate)} × ${+p.shifts||0} см.</div>`).join('')}
+  ${Object.keys(cats).length?`<div class="st" style="margin-top:6px">Траты: ${Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>esc(c)+' '+fmt(v)).join(' · ')}</div>`:''}</div>`}).join('')||'<div class="cd st">Пока нет данных.</div>'}
+
+async function loadNames(){if(!U)return;const ids=[...new Set([...TX.map(t=>t.by),...PAY.map(p=>p.uid)].filter(x=>x&&!(x in names)))];if(!ids.length)return;
+ try{const p=await U.profiles(ids);ids.forEach(i=>names[i]=p[i]?(p[i].isMe?'я':p[i].name):'');render()}catch(e){ids.forEach(i=>names[i]='')}}
+
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-p]').forEach(x=>x.classList.toggle('on',x===b));$('#cur').hidden=b.dataset.p!=='cur';$('#arc').hidden=b.dataset.p!=='arc'});
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{type=b.dataset.t;document.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x===b));fillCat()});
+$('#add').onclick=async()=>{const a=+$('#am').value;if(!(a>0))return err('Введите сумму больше нуля');
+ const r={type,amount:a,date:$('#dt').value||today(),note:$('#nt').value.trim(),by:uid};
+ if(type==='save'){r.goal=$('#ct').value;r.cat='Накопления'}else r.cat=$('#ct').value;
+ await w(db.collection('tx').add(r));$('#am').value='';$('#nt').value='';$('#msg').textContent=''};
+$('#ga').onclick=async()=>{const n=$('#gn').value.trim(),t=+$('#gt').value;if(!n||!(t>0))return err('Укажите название и сумму цели');
+ await w(db.collection('goals').add({name:n,target:t}));$('#gn').value='';$('#gt').value=''};
+/* Удаление: два нажатия (confirm() в окне просмотра заблокирован, поэтому он не использовался) */
+document.addEventListener('click',e=>{const b=e.target.closest('[data-d],[data-g]');if(!b)return;
+ if(!b.dataset.arm){b.dataset.arm=1;b.textContent='Удалить?';b.style.color='var(--ex)';setTimeout(()=>{if(b.isConnected){delete b.dataset.arm;b.textContent='✕';b.style.color=''}},3000);return}
+ w(b.dataset.d?db.collection('tx').doc(b.dataset.d).delete():db.collection('goals').doc(b.dataset.g).delete())});
+PF.forEach(k=>$('#'+k).oninput=savePay);
+$('#ex1').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([db.dump()],{type:'application/json'}));a.download='budget-backup.json';a.click()};
+$('#im1').onclick=()=>$('#imf').click();
+$('#imf').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>db.load(t)).catch(err)};
+
+$('#p_ar').onclick=async()=>{clearTimeout(timer);const o={m:viewM,uid};PF.forEach(k=>o[k]=+$('#'+k).value||0);
+ await w(db.collection('pay').doc(viewM+'_'+uid).set(o));$('#msg').textContent='Месяц «'+mlabel(viewM)+'» выгружен в архив';document.querySelector('[data-p="arc"]').click()};
+$('#mon').onchange=e=>{if(!e.target.value)return;viewM=e.target.value;setDt();fillPay();render()};
+$('#a_ok').onclick=async()=>{const m=$('#a_m').value;if(!m)return err('Выберите месяц');
+ const v=k=>+$('#'+k).value||0,old=PAY.find(p=>p.id===m+'_'+uid)||{};
+ await w(db.collection('pay').doc(m+'_'+uid).set({rate:old.rate||0,shifts:old.shifts||0,m,uid,kpi:v('a_kpi'),adv:v('a_adv'),sal:v('a_sal')}));
+ const ad=(ty,cat,a)=>a>0&&w(db.collection('tx').add({type:ty,cat,amount:a,date:m+'-01',note:'Внесено в архив',by:uid}));
+ await ad('expense','Траты за месяц (итого)',v('a_ex'));await ad('save','Накопления',v('a_sv'));
+ ['a_adv','a_sal','a_kpi','a_ex','a_sv'].forEach(k=>$('#'+k).value='');$('#msg').textContent='Месяц сохранён в архив'};
+(async()=>{
+ try{db=await claude.use('db');U=await claude.use('user');uid=U&&await U.id()}catch(e){}
+ if(!db||!uid){U=null;db=mkLocal();uid='local';names.local='я';$('#loc').hidden=false;$('#bk').hidden=false}
+ fillCat();
+ db.collection('tx').onSnapshot(s=>{TX=s.docs.map(d=>({id:d.id,...d.data()}));render();loadNames()},err);
+ db.collection('goals').onSnapshot(s=>{GL=s.docs.map(d=>({id:d.id,...d.data()}));fillCat();render()},err);
+ db.collection('pay').onSnapshot(s=>{PAY=s.docs.map(d=>({id:d.id,...d.data()}));fillPay();render();loadNames()},err);
+ setInterval(()=>{if(cm()!==curM){if(viewM===curM){viewM=cm();$('#mon').value=viewM}curM=cm();setDt();fillPay();render()}},30000);
+})();
+</script></body></html>
